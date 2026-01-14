@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=jobmarketstorage;AccountKey=XT0ETtuFAuHEWnv/MKADLvFHv1sleZgxQsRARV16l/2bT5/I+TvYTtrCxqRw+bQAZtU2ieuDSxc+AStPNd31A==;EndpointSuffix=core.windows.net",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "ADZUNA_APP_ID": "92c0a55a",
+    "ADZUNA_APP_KEY": "d58f307a1667e2e502b8da4ad83ef81c",
+    "SQL_SERVER": "auseast.database.windows.net",
+    "SQL_PORT": "1433",
+    "SQL_DATABASE": "JobMarketDb",
+    "SQL_USERNAME": "CloudSAfc8188ca",
+    "SQL_PASSWORD": "Aryakrish24"
+  }
+}
