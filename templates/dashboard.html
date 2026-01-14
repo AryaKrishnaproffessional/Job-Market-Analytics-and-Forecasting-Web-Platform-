@@ -1,0 +1,83 @@
+
+{% extends "base.html" %}
+{% block title %}Job Market Dashboard{% endblock %}
+
+{% block content %}
+
+{% if error %}
+  <div class="alert alert-error">
+    <strong>Could not load data from Azure SQL:</strong> {{ error }}
+  </div>
+{% elif empty %}
+  <div class="alert">No data available yet.</div>
+{% else %}
+
+<nav class="top-nav">
+  <a href="/" class="home-btn">← Home</a>
+
+  <form class="nav-search" action="/search" method="get">
+    <input
+      type="search"
+      name="q"
+      placeholder="Search another role..."
+      value="{{ selected_role }}"
+      required
+    />
+    <button type="submit">Search</button>
+  </form>
+</nav>
+
+
+<form method="get" class="controls">
+  <label for="role">Select role:</label>
+  <select id="role" name="role" onchange="this.form.submit()">
+    {% for r in roles %}
+      <option value="{{ r }}" {% if r == selected_role %}selected{% endif %}>{{ r }}</option>
+    {% endfor %}
+  </select>
+
+  <div class="stat">
+    <span class="stat-label">Total jobs</span>
+    <span class="stat-value">{{ total_jobs }}</span>
+  </div>
+</form>
+
+<section class="grid2">
+  <div class="card">
+    {{ fig1_html|safe }}
+  </div>
+  <div class="card">
+    {{ fig2_html|safe }}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Latest Job Listings</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th><th>Company</th><th>Location</th><th>Salary Avg</th><th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table_rows %}
+          <tr>
+            <td>{{ row.title }}</td>
+            <td>{{ row.company }}</td>
+            <td>{{ row.location }}</td>
+            <td>{{ "%.0f"|format(row.salary_avg) if row.salary_avg is not none else "" }}</td>
+            <td>{{ row.created }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  {{ fig3_html|safe }}
+</section>
+
+{% endif %}
+{% endblock %}

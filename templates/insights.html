@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Local Insights</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+
+  <style>
+    body { font-family: Raleway, sans-serif; margin: 0; background: #fbfbfd; color: #1a1a1a; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 56px 20px; }
+
+    .label {
+      display:inline-flex; align-items:center; gap:10px;
+      color:#c762f6; font-weight:700; letter-spacing:.2px;
+      margin-bottom: 18px;
+    }
+    .label .dot { width:10px; height:10px; border-radius:999px; background: linear-gradient(90deg,#f77373,#c762f6,#814bee); }
+
+    h1 {
+      margin: 0 0 22px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.05;
+      color: #2a0c4e;
+      font-weight: 800;
+    }
+
+    .toolbar {
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+      background: white;
+      border: 1px solid #eee;
+      padding: 14px;
+      border-radius: 16px;
+      margin: 22px 0 22px;
+      box-shadow: 0 10px 30px rgba(20,20,40,.06);
+    }
+
+    .pill {
+      display:flex; align-items:center; gap:10px;
+      border: 1px solid #eee;
+      border-radius: 999px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+    .pill strong { font-size: 13px; color: #2a0c4e; }
+    .pill input { border:none; outline:none; font-size: 14px; width: 240px; }
+
+    .btn {
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      color: white;
+      background: #2a0c4e;
+    }
+    .btn.secondary {
+      background: white;
+      color: #2a0c4e;
+      border: 1px solid #eee;
+    }
+    .status { color:#6b5b7a; font-size:13px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(20,20,40,.06);
+    min-height: 0;               
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+
+    .card-head {
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid #f2f2f5;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #2a0c4e;
+    }
+    .card-sub {
+      margin: 6px 0 0;
+      color: #6b5b7a;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .card-body {
+  padding: 14px 14px 16px;
+  width: 100%;
+  overflow-x: auto;
+}
+  .card.card-centre {
+    grid-column: 1 / -1;   
+    max-width: 720px;     
+    margin: 0 auto;       
+  }
+
+
+  table.dataTable { width: 100% !important; }
+.dataTables_wrapper { width: 100%; }
+.dataTables_scrollHeadInner, .dataTables_scrollHeadInner table { width: 100% !important; }
+
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 6px 10px;
+  width: 160px;
+}
+
+
+    table.dataTable { border-collapse: collapse !important; }
+    .dataTables_wrapper .dataTables_filter input {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 6px 10px;
+  width: 140px;
+}
+    .dataTables_wrapper .dataTables_length select { border-radius: 10px; padding: 4px 6px; }
+
+  .span-2 { grid-column: span 2; }
+  @media (max-width: 1100px) { .span-2 { grid-column: span 1; } }
+
+
+    .dataTables_wrapper .dataTables_length { float: left; }
+    .dataTables_wrapper .dataTables_filter {
+      float: none;
+      display: flex;
+      justify-content: flex-end;
+      margin-right: 18px; 
+    }
+
+
+    .dataTables_wrapper .dataTables_info {
+      float: none !important;
+      text-align: center !important;
+      padding-top: 10px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+      float: none !important;
+      text-align: center !important;
+      padding-top: 6px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate,
+    .dataTables_wrapper .dataTables_info {
+      clear: both;
+    }
+
+    @media (max-width: 600px) {
+      .dataTables_wrapper .dataTables_length,
+      .dataTables_wrapper .dataTables_filter {
+        float: none !important;
+        text-align: left !important;
+        margin-bottom: 8px;
+      }
+    }
+
+
+.section {
+  margin-top: 26px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(20,20,40,.06);
+  overflow: hidden;
+}
+
+.section-head {
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid #f2f2f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #2a0c4e;
+}
+
+.section-sub {
+  margin: 6px 0 0;
+  color: #6b5b7a;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.section-body {
+  padding: 14px 14px 18px;
+}
+
+/* animation on scroll*/
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toggle {
+  display:flex; gap:8px; align-items:center; flex-wrap: wrap;
+}
+.toggle button {
+  border: 1px solid #eee;
+  background: white;
+  color: #2a0c4e;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.toggle button.active {
+  background: #2a0c4e;
+  color: white;
+  border-color: #2a0c4e;
+}
+
+.kpi-grid {
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+.kpi {
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+}
+.kpi .k { font-size: 12px; color: #6b5b7a; font-weight: 800; }
+.kpi .v { font-size: 26px; color: #2a0c4e; font-weight: 900; margin-top: 6px; }
+.kpi .s { font-size: 12px; color: #6b5b7a; margin-top: 6px; }
+
+.chart-wrap {
+  margin-top: 14px;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+
+  </style>
+</head>
+
+<body>
+
+
+  <div class="container">
+    <div class="label"><span class="dot"></span> Features</div>
+    <h1>Powerful insights.<br>seamless experience.</h1>
+    <p class="status" style="margin-top:-10px;">Results for <strong>{{ query }}</strong></p>
+
+
+    <div class="toolbar">
+      <div class="pill">
+        <strong>Location</strong>
+        <input id="locInput" placeholder="e.g., Melbourne, Sydney, Brisbane" />
+      </div>
+      <button class="btn" id="refreshBtn">Refresh</button>
+      <a class="btn secondary" href="/">Home</a>
+      <span class="status" id="status"></span>
+    </div>
+
+    <div class="grid">
+      <div class="card span-2">
+        <div class="card-head">
+          <p class="card-title">Highest salaries</p>
+          <p class="card-sub">Top-paying listings filtered by location.</p>
+        </div>
+        <div class="card-body">
+          <table id="tblTopSalary" class="display" style="width:100%"></table>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">Jobs in your area</p>
+          <p class="card-sub">Most recent listings near your selected location.</p>
+        </div>
+        <div class="card-body">
+          <table id="tblNearby" class="display" style="width:100%"></table>
+        </div>
+      </div>
+
+
+
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">Opening soon</p>
+          <p class="card-sub">Newly posted roles in the last 7 days.</p>
+        </div>
+        <div class="card-body">
+          <table id="tblOpening" class="display" style="width:100%"></table>
+        </div>
+      </div>
+
+      <div class="card span-2">
+        <div class="card-head">
+          <p class="card-title">Closing soon</p>
+          <p class="card-sub">Approximation based on whether a job disappears from latest snapshots.</p>
+        </div>
+        <div class="card-body">
+          <table id="tblClosing" class="display" style="width:100%"></table>
+        </div>
+      </div>
+
+      <div class="card card-centre">
+        <div class="card-head">
+          <p class="card-title">Related jobs</p>
+          <p class="card-sub">Similar roles based on your current filters.</p>
+        </div>
+        <div class="card-body">
+          <table id="tblRelated" class="display" style="width:100%"></table>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center; margin: 14px 0 6px;">
+      <a href="#analytics" class="btn secondary" style="border-radius:999px;">View analytics ↓</a>
+    </div>
+
+    <section id="analytics" class="section reveal">
+      <div class="section-head">
+        <div>
+          <p class="section-title">Market analytics</p>
+          <p class="section-sub">Created vs closed jobs for your filters (role/location). Switch window to compare month vs year.</p>
+        </div>
+
+        <div class="toggle" aria-label="Window toggle">
+          <button id="btnMonth" class="active" type="button">Last month</button>
+          <button id="btnYear" type="button">Last year</button>
+          <span class="status" id="marketStatus"></span>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="k">Jobs created</div>
+            <div class="v" id="kpiCreated">—</div>
+            <div class="s">Within selected window</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Jobs closed</div>
+            <div class="v" id="kpiClosed">—</div>
+            <div class="s">Based on snapshot disappearance</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Net change</div>
+            <div class="v" id="kpiNet">—</div>
+            <div class="s">Created − closed</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Active now</div>
+            <div class="v" id="kpiActive">—</div>
+            <div class="s">In latest snapshot</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div id="marketChart"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="forecast" class="section reveal">
+      <div class="section-head">
+        <div>
+          <p class="section-title">5-year forecast</p>
+          <p class="section-sub">Projected job volume trend using simple modelling (can be upgraded later).</p>
+        </div>
+
+        <div class="toggle">
+          <button id="btnForecast5" class="active" type="button">Next 5 years</button>
+          <span class="status" id="forecastStatus"></span>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="chart-wrap">
+          <div id="forecastChart"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+
+  <script>
+    const QUERY = "{{ query|e }}";
+
+    const cols = [
+      { title: "Title", data: "title" },
+      { title: "Company", data: "company" },
+      { title: "Location", data: "location" },
+      { title: "Salary", data: "salary_avg" },
+      { title: "Created", data: "created" },
+    ];
+
+    const tables = {};
+
+    function initOrUpdate(id, rows) {
+      if (tables[id]) {
+        tables[id].clear().rows.add(rows).draw();
+        return;
+      }
+
+      const isTop = (id === "tblTopSalary");
+
+      tables[id] = $("#" + id).DataTable({
+        data: rows,
+        columns: cols,
+        autoWidth: false,
+        scrollX: true,
+        scrollCollapse: true,
+
+        ...(isTop ? {
+          paging: false,     
+          info: false,
+          scrollY: "480px", 
+        } : {
+          pageLength: 5,
+          lengthMenu: [5, 10, 25],
+        }),
+
+        order: [[3, "desc"]]  
+      });
+    }
+
+
+
+    async function loadInsights() {
+      const loc = document.getElementById("locInput").value.trim();
+      document.getElementById("status").textContent = "Loading…";
+
+      const url = new URL("/api/insights", window.location.origin);
+      if (loc) url.searchParams.set("loc", loc);
+      if (QUERY) url.searchParams.set("q", QUERY);
+
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      initOrUpdate("tblNearby", data.nearby);
+      initOrUpdate("tblTopSalary", data.top_salary);
+      initOrUpdate("tblOpening", data.opening_soon);
+      initOrUpdate("tblClosing", data.closing_soon);
+      initOrUpdate("tblRelated", data.related);
+
+      document.getElementById("status").textContent = loc ? `Showing “${loc}”.` : "Showing all locations.";
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", loadInsights);
+    loadInsights();
+
+      //scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+
+  let windowMode = "month";
+
+  function getFilters() {
+    const loc = document.getElementById("locInput").value.trim();
+    return { loc, q: (typeof QUERY !== "undefined" ? QUERY : "") };
+  }
+
+  async function loadMarket() {
+    const { loc, q } = getFilters();
+    document.getElementById("marketStatus").textContent = "Loading…";
+
+    const url = new URL("/api/market_summary", window.location.origin);
+    url.searchParams.set("window", windowMode);
+    if (loc) url.searchParams.set("loc", loc);
+    if (q) url.searchParams.set("q", q);
+
+    const res = await fetch(url.toString());
+    const data = await res.json();
+
+    document.getElementById("kpiCreated").textContent = data.kpis.created;
+    document.getElementById("kpiClosed").textContent = data.kpis.closed;
+    document.getElementById("kpiNet").textContent = data.kpis.net;
+    document.getElementById("kpiActive").textContent = data.kpis.active_now;
+
+    Plotly.react("marketChart", data.chart.data, data.chart.layout, {displayModeBar:false, responsive:true});
+    document.getElementById("marketStatus").textContent = windowMode === "month" ? "Last 30 days" : "Last 12 months";
+  }
+
+  async function loadForecast() {
+    const { loc, q } = getFilters();
+    document.getElementById("forecastStatus").textContent = "Loading…";
+
+    const url = new URL("/api/forecast", window.location.origin);
+    url.searchParams.set("years", "5");
+    if (loc) url.searchParams.set("loc", loc);
+    if (q) url.searchParams.set("q", q);
+
+    const res = await fetch(url.toString());
+    const data = await res.json();
+
+    Plotly.react("forecastChart", data.chart.data, data.chart.layout, {displayModeBar:false, responsive:true});
+    document.getElementById("forecastStatus").textContent = "Updated";
+  }
+
+  // buttons
+  document.getElementById("btnMonth").addEventListener("click", () => {
+    windowMode = "month";
+    document.getElementById("btnMonth").classList.add("active");
+    document.getElementById("btnYear").classList.remove("active");
+    loadMarket();
+  });
+  document.getElementById("btnYear").addEventListener("click", () => {
+    windowMode = "year";
+    document.getElementById("btnYear").classList.add("active");
+    document.getElementById("btnMonth").classList.remove("active");
+    loadMarket();
+  });
+
+  // Hook into your existing refresh button too:
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    loadMarket();
+    loadForecast();
+  });
+
+
+  const _oldLoadInsights = loadInsights;
+  loadInsights = async function() {
+    await _oldLoadInsights();
+    await loadMarket();
+    await loadForecast();
+  }
+  </script>
+</body>
+</html>

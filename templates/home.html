@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Job Market Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
+        integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
+        crossorigin="anonymous">
+
+  <style>
+    body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+    html, body { height: 100%; margin: 0; }
+
+    .bgimg-1 {
+      min-height: 100vh;
+      background: linear-gradient(45deg, #000000, #0f0f2b);
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 64px; 
+      box-sizing: border-box;
+    }
+
+
+    .hero-wrap {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: min(700px, 92vw);
+  }
+
+
+
+
+    .hero-title {
+      color: #fff;
+      font-size: clamp(26px, 4vw, 46px);
+      font-weight: 700;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-subtitle {
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 26px;
+      font-size: 16px;
+    }
+
+    form.search-form {
+      position: relative;
+      margin: 0 auto;
+      transition: all 0.8s;
+      width: 56px;
+      height: 56px;
+      background: white;
+      box-sizing: border-box;
+      border-radius: 999px;
+      border: 4px solid white;
+      padding: 6px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+
+    form.search-form input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 48px;
+      outline: 0;
+      border: 0;
+      font-size: 1em;
+      border-radius: 999px;
+      padding: 0 18px;
+    }
+
+    form.search-form .fas.fa-search {
+      box-sizing: border-box;
+      padding: 12px;
+      width: 48px;
+      height: 48px;
+      position: absolute;
+      top: 0;
+      right: 0;
+      border-radius: 999px;
+      color: #07051a;
+      text-align: center;
+      font-size: 1.2em;
+      transition: all 0.8s;
+      cursor: pointer;
+    }
+
+    form.search-form:focus-within,
+    form.search-form:hover,
+    form.search-form:valid {
+      width: min(520px, 92vw);
+      cursor: text;
+    }
+
+    form.search-form:hover input,
+    form.search-form:focus-within input,
+    form.search-form:valid input {
+      width: 100%;
+    }
+
+    form.search-form:hover .fas.fa-search,
+    form.search-form:focus-within .fas.fa-search,
+    form.search-form:valid .fas.fa-search {
+      background: #07051a;
+      color: white;
+    }
+
+    .hint {
+      margin-top: 16px;
+      color: rgba(255,255,255,0.75);
+      font-size: 14px;
+    }
+
+    .w3-bar.w3-white {
+      background: rgba(255,255,255,0.95) !important;
+      backdrop-filter: blur(6px);
+    }
+
+    .suggestions {
+      position: absolute;
+      top: 62px;
+      left: 0;
+      right: 0;
+      background: rgba(20, 24, 38, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 9999;
+      text-align: left;
+    }
+
+    .suggestions.hidden { display: none; }
+
+    .suggestion-item {
+      padding: 12px 14px;
+      color: rgba(255,255,255,0.92);
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.active {
+      background: rgba(255,255,255,0.08);
+    }
+
+    mark {
+      background: rgba(255,255,255,0.16);
+      color: white;
+      border-radius: 6px;
+      padding: 0 4px;
+    }
+
+.bg-float{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  z-index:0;
+  pointer-events:none;
+}
+
+.hero-wrap{ position: relative; z-index: 2; }
+
+.bg-token{
+  position:absolute;
+  left: -20%;
+  white-space: nowrap;
+  font-weight: 700;
+  opacity: 0.14;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  filter: blur(0.2px);
+  transform: translate3d(0,0,0);
+  animation: floatAcross linear forwards;
+}
+
+.bg-token.dim{ opacity: 0.08; }
+.bg-token.bright{ opacity: 0.18; }
+
+@keyframes floatAcross {
+  from { transform: translateX(-10vw); }
+  to   { transform: translateX(130vw); }
+}
+
+.bg-float::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.08), transparent 55%);
+  mix-blend-mode: screen;
+}
+
+  </style>
+</head>
+
+<body>
+
+<div class="w3-top">
+  <div class="w3-bar w3-white w3-card" id="myNavbar">
+    <a href="/" class="w3-bar-item w3-button w3-wide">JobMarket</a>
+    <div class="w3-right w3-hide-small">
+      <a href="/dashboard" class="w3-bar-item w3-button">Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<header class="bgimg-1" id="home">
+  <div class="bg-float" aria-hidden="true"></div>
+
+  <div class="hero-wrap">
+    <div class="hero-title">Search the Australian job market</div>
+    <div class="hero-subtitle">Type a role (e.g., “data scientist”, “software engineer”, “cybersecurity”).</div>
+
+    <form class="search-form" action="/insights" method="get">
+      <input
+        id="roleInput"
+        type="search"
+        name="q"
+        autofocus
+        required
+        placeholder="Search role…"
+      />
+
+      <button type="submit" aria-label="Search" style="all: unset;">
+        <i class="fas fa-search"></i>
+      </button>
+    </form>
+
+
+    <div class="hint">Press Enter to search</div>
+  </div>
+</header>
+
+<script>
+  window.ROLES = {{ roles|tojson }};
+</script>
+
+<script>
+  const input = document.getElementById("roleInput");
+  const box = document.getElementById("suggestions");
+
+  let activeIndex = -1;
+  let current = [];
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function highlight(text, q) {
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx < 0) return escapeHtml(text);
+    const before = escapeHtml(text.slice(0, idx));
+    const mid = escapeHtml(text.slice(idx, idx + q.length));
+    const after = escapeHtml(text.slice(idx + q.length));
+    return `${before}<mark>${mid}</mark>${after}`;
+  }
+
+  function render(list, q) {
+    box.innerHTML = "";
+    if (!list.length) {
+      box.classList.add("hidden");
+      return;
+    }
+    box.classList.remove("hidden");
+
+    list.forEach((role, i) => {
+      const div = document.createElement("div");
+      div.className = "suggestion-item" + (i === activeIndex ? " active" : "");
+      div.setAttribute("role", "option");
+      div.innerHTML = `<span>${highlight(role, q)}</span>`;
+
+      div.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = role;
+        box.classList.add("hidden");
+        input.form.requestSubmit();
+      });
+
+      box.appendChild(div);
+    });
+  }
+
+  function update() {
+    const q = input.value.trim();
+    activeIndex = -1;
+
+    if (!q) {
+      box.classList.add("hidden");
+      return;
+    }
+
+    current = (window.ROLES || [])
+      .filter(r => r.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 8);
+
+    render(current, q);
+  }
+
+  input.addEventListener("input", update);
+
+  input.addEventListener("keydown", (e) => {
+    if (box.classList.contains("hidden")) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, current.length - 1);
+      render(current, input.value.trim());
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      render(current, input.value.trim());
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && current[activeIndex]) {
+        e.preventDefault();
+        input.value = current[activeIndex];
+        box.classList.add("hidden");
+        input.form.requestSubmit();
+      }
+    } else if (e.key === "Escape") {
+      box.classList.add("hidden");
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!box.contains(e.target) && e.target !== input) box.classList.add("hidden");
+  });
+
+  const TOKENS = [
+    "DATA", "AI", "ML", "SQL", "Cloud", "Python", "Kotlin", "DevOps",
+    "Cyber", "React", "Flask", "Azure", "ETL", "API", "SRE",
+    "$120k", "$150k", "$180k", "7d", "24h", "90d", "50+", "1.2k", "3.8k"
+  ];
+
+  const layer = document.querySelector(".bg-float");
+
+  function rand(min, max){ return Math.random() * (max - min) + min; }
+
+  function spawnToken(){
+    if (!layer) return;
+
+    const el = document.createElement("div");
+    el.className = "bg-token";
+    const t = TOKENS[Math.floor(Math.random() * TOKENS.length)];
+    el.textContent = t;
+
+    const top = rand(6, 92);
+    const size = rand(12, 34);
+    const duration = rand(10, 24);
+    const delay = rand(0, 2);
+
+    el.style.top = top + "%";
+    el.style.fontSize = size + "px";
+    el.style.animationDuration = duration + "s";
+    el.style.animationDelay = delay + "s";
+
+    const r = Math.random();
+    if (r < 0.33) el.classList.add("dim");
+    else if (r > 0.8) el.classList.add("bright");
+
+    const drift = rand(-18, 18);
+    el.style.transform = `translateX(-10vw) translateY(${drift}px)`;
+
+    layer.appendChild(el);
+
+    const totalMs = (duration + delay) * 1000;
+    setTimeout(() => el.remove(), totalMs + 200);
+  }
+
+  for (let i = 0; i < 12; i++) spawnToken();
+
+  setInterval(spawnToken, 700);
+</script>
+
+</body>
+</html>
