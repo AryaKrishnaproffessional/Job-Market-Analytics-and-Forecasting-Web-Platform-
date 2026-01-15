@@ -7,9 +7,30 @@
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
   <style>
-    body { font-family: Raleway, sans-serif; margin: 0; background: #fbfbfd; color: #1a1a1a; }
+    :root {
+      --bg-primary: #fbfbfd;
+      --bg-secondary: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b5b7a;
+      --border-color: #eee;
+      --card-shadow: rgba(20,20,40,.06);
+      --input-bg: #ffffff;
+    }
+
+    body.dark-mode {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --text-primary: #e8e8f0;
+      --text-secondary: #a8a0b8;
+      --border-color: #333;
+      --card-shadow: rgba(0,0,0,.3);
+      --input-bg: #2a2a3e;
+    }
+
+    body { font-family: Raleway, sans-serif; margin: 0; background: var(--bg-primary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
     .container { max-width: 1180px; margin: 0 auto; padding: 56px 20px; }
 
     .label {
@@ -29,23 +50,23 @@
 
     .toolbar {
       display:flex; gap:12px; flex-wrap:wrap; align-items:center;
-      background: white;
-      border: 1px solid #eee;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
       padding: 14px;
       border-radius: 16px;
       margin: 22px 0 22px;
-      box-shadow: 0 10px 30px rgba(20,20,40,.06);
+      box-shadow: 0 10px 30px var(--card-shadow);
     }
 
     .pill {
       display:flex; align-items:center; gap:10px;
-      border: 1px solid #eee;
+      border: 1px solid var(--border-color);
       border-radius: 999px;
       padding: 10px 12px;
-      background: #fff;
+      background: var(--input-bg);
     }
     .pill strong { font-size: 13px; color: #2a0c4e; }
-    .pill input { border:none; outline:none; font-size: 14px; width: 240px; }
+    .pill input { border:none; outline:none; font-size: 14px; width: 240px; background: var(--input-bg); color: var(--text-primary); }
 
     .btn {
       border: none;
@@ -55,13 +76,18 @@
       font-weight: 700;
       color: white;
       background: #2a0c4e;
+      transition: all 0.3s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(42, 12, 78, 0.3);
     }
     .btn.secondary {
-      background: white;
+      background: var(--input-bg);
       color: #2a0c4e;
-      border: 1px solid #eee;
+      border: 1px solid var(--border-color);
     }
-    .status { color:#6b5b7a; font-size:13px; }
+    .status { color: var(--text-secondary); font-size:13px; }
 
     .grid{
       display:grid;
@@ -73,21 +99,20 @@
     @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
 
     .card {
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(20,20,40,.06);
-    min-height: 0;               
-    height: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px var(--card-shadow);
+      min-height: 0;               
+      height: auto;
+      display: flex;
+      flex-direction: column;
+    }
 
     .card-head {
       padding: 18px 18px 12px;
-      border-bottom: 1px solid #f2f2f5;
+      border-bottom: 1px solid var(--border-color);
     }
     .card-title {
       margin: 0;
@@ -97,47 +122,45 @@
     }
     .card-sub {
       margin: 6px 0 0;
-      color: #6b5b7a;
+      color: var(--text-secondary);
       font-size: 13px;
       line-height: 1.35;
     }
 
     .card-body {
-  padding: 14px 14px 16px;
-  width: 100%;
-  overflow-x: auto;
-}
-  .card.card-centre {
-    grid-column: 1 / -1;   
-    max-width: 720px;     
-    margin: 0 auto;       
-  }
+      padding: 14px 14px 16px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    .card.card-centre {
+      grid-column: 1 / -1;   
+      max-width: 720px;     
+      margin: 0 auto;       
+    }
 
+    table.dataTable { width: 100% !important; }
+    .dataTables_wrapper { width: 100%; }
 
-  table.dataTable { width: 100% !important; }
-.dataTables_wrapper { width: 100%; }
-.dataTables_scrollHeadInner, .dataTables_scrollHeadInner table { width: 100% !important; }
-
-.dataTables_wrapper .dataTables_filter input {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 6px 10px;
-  width: 160px;
-}
-
+    .dataTables_wrapper .dataTables_filter input {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px 10px;
+      width: 160px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+    }
 
     table.dataTable { border-collapse: collapse !important; }
-    .dataTables_wrapper .dataTables_filter input {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 6px 10px;
-  width: 140px;
-}
-    .dataTables_wrapper .dataTables_length select { border-radius: 10px; padding: 4px 6px; }
+    .dataTables_wrapper .dataTables_length select { 
+      border-radius: 10px; 
+      padding: 4px 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
 
-  .span-2 { grid-column: span 2; }
-  @media (max-width: 1100px) { .span-2 { grid-column: span 1; } }
-
+    .span-2 { grid-column: span 2; }
+    @media (max-width: 1100px) { .span-2 { grid-column: span 1; } }
 
     .dataTables_wrapper .dataTables_length { float: left; }
     .dataTables_wrapper .dataTables_filter {
@@ -147,11 +170,11 @@
       margin-right: 18px; 
     }
 
-
     .dataTables_wrapper .dataTables_info {
       float: none !important;
       text-align: center !important;
       padding-top: 10px;
+      color: var(--text-secondary);
     }
 
     .dataTables_wrapper .dataTables_paginate {
@@ -160,124 +183,386 @@
       padding-top: 6px;
     }
 
-    .dataTables_wrapper .dataTables_paginate,
-    .dataTables_wrapper .dataTables_info {
-      clear: both;
+    .section {
+      margin-top: 26px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px var(--card-shadow);
+      overflow: hidden;
     }
 
-    @media (max-width: 600px) {
-      .dataTables_wrapper .dataTables_length,
-      .dataTables_wrapper .dataTables_filter {
-        float: none !important;
-        text-align: left !important;
-        margin-bottom: 8px;
-      }
+    .section-head {
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
+    .section-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      color: #2a0c4e;
+    }
 
-.section {
-  margin-top: 26px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(20,20,40,.06);
-  overflow: hidden;
-}
+    .section-sub {
+      margin: 6px 0 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.35;
+    }
 
-.section-head {
-  padding: 18px 18px 12px;
-  border-bottom: 1px solid #f2f2f5;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+    .section-body {
+      padding: 14px 14px 18px;
+    }
 
-.section-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 900;
-  color: #2a0c4e;
-}
+    .reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-.section-sub {
-  margin: 6px 0 0;
-  color: #6b5b7a;
-  font-size: 13px;
-  line-height: 1.35;
-}
+    .toggle {
+      display:flex; gap:8px; align-items:center; flex-wrap: wrap;
+    }
+    .toggle button {
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: #2a0c4e;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .toggle button.active {
+      background: #2a0c4e;
+      color: white;
+      border-color: #2a0c4e;
+    }
 
-.section-body {
-  padding: 14px 14px 18px;
-}
+    .kpi-grid {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .kpi-grid { grid-template-columns: 1fr; } }
 
-/* animation on scroll*/
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity .55s ease, transform .55s ease;
-}
-.reveal.in {
-  opacity: 1;
-  transform: translateY(0);
-}
+    .kpi {
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--input-bg);
+    }
+    .kpi .k { font-size: 12px; color: var(--text-secondary); font-weight: 800; }
+    .kpi .v { font-size: 26px; color: #2a0c4e; font-weight: 900; margin-top: 6px; }
+    .kpi .s { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
 
-.toggle {
-  display:flex; gap:8px; align-items:center; flex-wrap: wrap;
-}
-.toggle button {
-  border: 1px solid #eee;
-  background: white;
-  color: #2a0c4e;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.toggle button.active {
-  background: #2a0c4e;
-  color: white;
-  border-color: #2a0c4e;
-}
+    .chart-wrap {
+      margin-top: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--input-bg);
+    }
 
-.kpi-grid {
-  display:grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-@media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .kpi-grid { grid-template-columns: 1fr; } }
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--text-secondary);
+      border-top-color: #2a0c4e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
 
-.kpi {
-  border: 1px solid #eee;
-  border-radius: 16px;
-  padding: 14px;
-  background: #fff;
-}
-.kpi .k { font-size: 12px; color: #6b5b7a; font-weight: 800; }
-.kpi .v { font-size: 26px; color: #2a0c4e; font-weight: 900; margin-top: 6px; }
-.kpi .s { font-size: 12px; color: #6b5b7a; margin-top: 6px; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-.chart-wrap {
-  margin-top: 14px;
-  border: 1px solid #eee;
-  border-radius: 16px;
-  overflow: hidden;
-}
+    .graduate-celebration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      animation: fadeIn 0.5s ease;
+    }
 
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
 
+    .celebration-container {
+      position: relative;
+      width: 300px;
+      height: 400px;
+      animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .book-buddy {
+      position: relative;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    .book-character {
+      width: 140px;
+      height: 180px;
+      margin: 0 auto 20px;
+      position: relative;
+      perspective: 1000px;
+    }
+
+    .book-cover {
+      width: 140px;
+      height: 180px;
+      background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 50%, #8B0000 100%);
+      border-radius: 8px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset -2px 0 5px rgba(0, 0, 0, 0.2);
+      animation: bookBounce 2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .book-cover::before {
+      content: "📚";
+      font-size: 60px;
+      animation: bookHop 1.5s ease-in-out infinite;
+    }
+
+    @keyframes bookBounce {
+      0%, 100% { transform: translateY(0) rotateZ(0deg); }
+      25% { transform: translateY(-15px) rotateZ(-5deg); }
+      50% { transform: translateY(0) rotateZ(0deg); }
+      75% { transform: translateY(-15px) rotateZ(5deg); }
+    }
+
+    @keyframes bookHop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .book-pages-anim {
+      position: absolute;
+      width: 130px;
+      height: 170px;
+      background: linear-gradient(90deg, #FFF8E1 0%, #FFFBEA 50%, #FFF8E1 100%);
+      border-radius: 6px;
+      right: 5px;
+      top: 5px;
+      opacity: 0;
+      animation: pageFlip 3s ease-in-out infinite;
+    }
+
+    @keyframes pageFlip {
+      0%, 20% { opacity: 0; transform: rotateY(0deg); }
+      30% { opacity: 1; transform: rotateY(0deg); }
+      40% { opacity: 1; transform: rotateY(-90deg); }
+      60% { opacity: 1; transform: rotateY(-90deg); }
+      70% { opacity: 1; transform: rotateY(0deg); }
+      80%, 100% { opacity: 0; }
+    }
+
+    .eyes {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 25px;
+      width: 60px;
+      animation: eyeBlink 3s ease-in-out infinite;
+    }
+
+    .eye {
+      width: 16px;
+      height: 16px;
+      background: #000;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .eye::before {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      animation: eyeShine 1s ease-in-out infinite;
+    }
+
+    @keyframes eyeBlink {
+      0%, 10%, 100% { transform: translateX(-50%) scaleY(1); }
+      5% { transform: translateX(-50%) scaleY(0.1); }
+    }
+
+    @keyframes eyeShine {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .bubble-text {
+      background: #2a0c4e;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 16px;
+      margin-top: 20px;
+      position: relative;
+      animation: bubblePop 3s ease-in-out infinite;
+      box-shadow: 0 4px 12px rgba(42, 12, 78, 0.3);
+    }
+
+    .bubble-text::before {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #2a0c4e;
+      border-radius: 50%;
+      bottom: -15px;
+      left: 20px;
+    }
+
+    @keyframes bubblePop {
+      0%, 20%, 100% { transform: scale(1) translateY(0); }
+      10% { transform: scale(1.05) translateY(-5px); }
+    }
+
+    .floating-icons {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .icon-float {
+      position: absolute;
+      font-size: 32px;
+      animation: float 4s ease-in-out infinite;
+      opacity: 0.8;
+    }
+
+    .icon-float:nth-child(1) {
+      top: 20px;
+      left: 10px;
+      animation-delay: 0s;
+    }
+
+    .icon-float:nth-child(2) {
+      top: 50px;
+      right: 20px;
+      animation-delay: 0.3s;
+    }
+
+    .icon-float:nth-child(3) {
+      bottom: 40px;
+      left: 30px;
+      animation-delay: 0.6s;
+    }
+
+    .icon-float:nth-child(4) {
+      bottom: 60px;
+      right: 40px;
+      animation-delay: 0.9s;
+    }
+
+    .icon-float:nth-child(5) {
+      top: 30%;
+      left: 5%;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+      50% { transform: translateY(-30px) rotate(10deg); opacity: 1; }
+    }
+
+    .close-celebration {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+      color: #2a0c4e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-celebration:hover {
+      background: #f0f0f0;
+    }
   </style>
 </head>
 
 <body>
-
 
   <div class="container">
     <div class="label"><span class="dot"></span> Features</div>
     <h1>Powerful insights.<br>seamless experience.</h1>
     <p class="status" style="margin-top:-10px;">Results for <strong>{{ query }}</strong></p>
 
+    <!--Graduate animation (test using AI)-->
+    <div id="graduateAnimation" class="graduate-celebration" style="display:none;">
+      <div class="celebration-container">
+        <div class="book-buddy">
+          <div class="book-character">
+            <div class="book-cover"></div>
+            <div class="book-pages-anim"></div>
+            <div class="eyes">
+              <div class="eye"></div>
+              <div class="eye"></div>
+            </div>
+          </div>
+          <div class="bubble-text">Great job, grad! 🎓</div>
+        </div>
+        
+        <div class="floating-icons">
+          <div class="icon-float">📚</div>
+          <div class="icon-float">✏️</div>
+          <div class="icon-float">🎓</div>
+          <div class="icon-float">⭐</div>
+          <div class="icon-float">📖</div>
+        </div>
+        
+        <button class="close-celebration" onclick="document.getElementById('graduateAnimation').style.display='none';">×</button>
+      </div>
+    </div>
 
     <div class="toolbar">
       <div class="pill">
@@ -286,6 +571,7 @@
       </div>
       <button class="btn" id="refreshBtn">Refresh</button>
       <a class="btn secondary" href="/">Home</a>
+      <button class="btn secondary" id="themeToggle">🌙 Dark</button>
       <span class="status" id="status"></span>
     </div>
 
@@ -300,7 +586,6 @@
         </div>
       </div>
 
-
       <div class="card">
         <div class="card-head">
           <p class="card-title">Jobs in your area</p>
@@ -310,8 +595,6 @@
           <table id="tblNearby" class="display" style="width:100%"></table>
         </div>
       </div>
-
-
 
       <div class="card">
         <div class="card-head">
@@ -343,6 +626,7 @@
         </div>
       </div>
     </div>
+
     <div style="text-align:center; margin: 14px 0 6px;">
       <a href="#analytics" class="btn secondary" style="border-radius:999px;">View analytics ↓</a>
     </div>
@@ -357,7 +641,7 @@
         <div class="toggle" aria-label="Window toggle">
           <button id="btnMonth" class="active" type="button">Last month</button>
           <button id="btnYear" type="button">Last year</button>
-          <span class="status" id="marketStatus"></span>
+          <span class="status" id="marketStatus"><span class="spinner"></span></span>
         </div>
       </div>
 
@@ -394,13 +678,13 @@
     <section id="forecast" class="section reveal">
       <div class="section-head">
         <div>
-          <p class="section-title">5-year forecast</p>
+          <p class="section-title">3-month forecast</p>
           <p class="section-sub">Projected job volume trend using simple modelling (can be upgraded later).</p>
         </div>
 
         <div class="toggle">
-          <button id="btnForecast5" class="active" type="button">Next 5 years</button>
-          <span class="status" id="forecastStatus"></span>
+          <button id="btnForecast5" class="active" type="button">Next 3 months</button>
+          <span class="status" id="forecastStatus"><span class="spinner"></span></span>
         </div>
       </div>
 
@@ -418,6 +702,26 @@
 
   <script>
     const QUERY = "{{ query|e }}";
+
+    //Dark mode 
+    const themeToggle = document.getElementById("themeToggle");
+    const html = document.documentElement;
+
+    const savedTheme = localStorage.getItem("theme") || "light";
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      themeToggle.textContent = "☀️ Light";
+    }
+
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      themeToggle.textContent = isDark ? "☀️ Light" : "🌙 Dark";
+      
+      loadMarket();
+      loadForecast();
+    });
 
     const cols = [
       { title: "Title", data: "title" },
@@ -457,8 +761,6 @@
       });
     }
 
-
-
     async function loadInsights() {
       const loc = document.getElementById("locInput").value.trim();
       document.getElementById("status").textContent = "Loading…";
@@ -467,100 +769,132 @@
       if (loc) url.searchParams.set("loc", loc);
       if (QUERY) url.searchParams.set("q", QUERY);
 
+      try {
+        const res = await fetch(url.toString());
+        const data = await res.json();
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
+        initOrUpdate("tblNearby", data.nearby);
+        initOrUpdate("tblTopSalary", data.top_salary);
+        initOrUpdate("tblOpening", data.opening_soon);
+        initOrUpdate("tblClosing", data.closing_soon);
+        initOrUpdate("tblRelated", data.related);
 
-      initOrUpdate("tblNearby", data.nearby);
-      initOrUpdate("tblTopSalary", data.top_salary);
-      initOrUpdate("tblOpening", data.opening_soon);
-      initOrUpdate("tblClosing", data.closing_soon);
-      initOrUpdate("tblRelated", data.related);
-
-      document.getElementById("status").textContent = loc ? `Showing “${loc}”.` : "Showing all locations.";
+        document.getElementById("status").textContent = loc ? `Showing "${loc}".` : "Showing all locations.";
+      } catch (err) {
+        console.error("Error loading insights:", err);
+        document.getElementById("status").textContent = "Error loading data.";
+      }
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", loadInsights);
-    loadInsights();
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      loadInsights();
+      loadMarket();
+      loadForecast();
+    });
 
-      //scroll
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); });
-  }, { threshold: 0.08 });
-  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); });
+    }, { threshold: 0.08 });
+    document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 
+    let windowMode = "month";
 
-  let windowMode = "month";
+    function getFilters() {
+      const loc = document.getElementById("locInput").value.trim();
+      return { loc, q: (typeof QUERY !== "undefined" ? QUERY : "") };
+    }
 
-  function getFilters() {
-    const loc = document.getElementById("locInput").value.trim();
-    return { loc, q: (typeof QUERY !== "undefined" ? QUERY : "") };
-  }
+    async function loadMarket() {
+      const { loc, q } = getFilters();
+      document.getElementById("marketStatus").innerHTML = '<span class="spinner"></span>';
 
-  async function loadMarket() {
-    const { loc, q } = getFilters();
-    document.getElementById("marketStatus").textContent = "Loading…";
+      const url = new URL("/api/market_summary", window.location.origin);
+      url.searchParams.set("window", windowMode);
+      if (loc) url.searchParams.set("loc", loc);
+      if (q) url.searchParams.set("q", q);
 
-    const url = new URL("/api/market_summary", window.location.origin);
-    url.searchParams.set("window", windowMode);
-    if (loc) url.searchParams.set("loc", loc);
-    if (q) url.searchParams.set("q", q);
+      try {
+        const res = await fetch(url.toString());
+        const data = await res.json();
 
-    const res = await fetch(url.toString());
-    const data = await res.json();
+        document.getElementById("kpiCreated").textContent = data.kpis.created;
+        document.getElementById("kpiClosed").textContent = data.kpis.closed;
+        document.getElementById("kpiNet").textContent = data.kpis.net;
+        document.getElementById("kpiActive").textContent = data.kpis.active_now;
 
-    document.getElementById("kpiCreated").textContent = data.kpis.created;
-    document.getElementById("kpiClosed").textContent = data.kpis.closed;
-    document.getElementById("kpiNet").textContent = data.kpis.net;
-    document.getElementById("kpiActive").textContent = data.kpis.active_now;
+        const isDark = document.body.classList.contains("dark-mode");
+        const layout = data.chart.layout;
+        layout.paper_bgcolor = isDark ? "#1a1a2e" : "white";
+        layout.plot_bgcolor = isDark ? "#2a2a3e" : "white";
+        layout.font = { color: isDark ? "#e8e8f0" : "#1a1a1a", family: "Raleway" };
 
-    Plotly.react("marketChart", data.chart.data, data.chart.layout, {displayModeBar:false, responsive:true});
-    document.getElementById("marketStatus").textContent = windowMode === "month" ? "Last 30 days" : "Last 12 months";
-  }
+        Plotly.react("marketChart", data.chart.data, layout, {displayModeBar: false, responsive: true});
+        document.getElementById("marketStatus").textContent = windowMode === "month" ? "Last 30 days" : "Last 12 months";
+      } catch (err) {
+        console.error("Error loading market summary:", err);
+        document.getElementById("marketStatus").textContent = "Error loading data.";
+      }
+    }
 
-  async function loadForecast() {
-    const { loc, q } = getFilters();
-    document.getElementById("forecastStatus").textContent = "Loading…";
+    async function loadForecast() {
+      const { loc, q } = getFilters();
+      document.getElementById("forecastStatus").innerHTML = '<span class="spinner"></span>';
 
-    const url = new URL("/api/forecast", window.location.origin);
-    url.searchParams.set("years", "5");
-    if (loc) url.searchParams.set("loc", loc);
-    if (q) url.searchParams.set("q", q);
+      const url = new URL("/api/forecast", window.location.origin);
+      if (loc) url.searchParams.set("loc", loc);
+      if (q) url.searchParams.set("q", q);
 
-    const res = await fetch(url.toString());
-    const data = await res.json();
+      try {
+        const res = await fetch(url.toString());
+        const data = await res.json();
 
-    Plotly.react("forecastChart", data.chart.data, data.chart.layout, {displayModeBar:false, responsive:true});
-    document.getElementById("forecastStatus").textContent = "Updated";
-  }
+        const isDark = document.body.classList.contains("dark-mode");
+        const layout = data.chart.layout;
+        layout.paper_bgcolor = isDark ? "#1a1a2e" : "white";
+        layout.plot_bgcolor = isDark ? "#2a2a3e" : "white";
+        layout.font = { color: isDark ? "#e8e8f0" : "#1a1a1a", family: "Raleway" };
 
-  // buttons
-  document.getElementById("btnMonth").addEventListener("click", () => {
-    windowMode = "month";
-    document.getElementById("btnMonth").classList.add("active");
-    document.getElementById("btnYear").classList.remove("active");
-    loadMarket();
-  });
-  document.getElementById("btnYear").addEventListener("click", () => {
-    windowMode = "year";
-    document.getElementById("btnYear").classList.add("active");
-    document.getElementById("btnMonth").classList.remove("active");
-    loadMarket();
-  });
+        Plotly.react("forecastChart", data.chart.data, layout, {displayModeBar: false, responsive: true});
+        document.getElementById("forecastStatus").textContent = "Updated";
+      } catch (err) {
+        console.error("Error loading forecast:", err);
+        document.getElementById("forecastStatus").textContent = "Error loading data.";
+      }
+    }
 
-  // Hook into your existing refresh button too:
-  document.getElementById("refreshBtn").addEventListener("click", () => {
-    loadMarket();
-    loadForecast();
-  });
+    document.getElementById("btnMonth").addEventListener("click", () => {
+      windowMode = "month";
+      document.getElementById("btnMonth").classList.add("active");
+      document.getElementById("btnYear").classList.remove("active");
+      loadMarket();
+    });
 
+    document.getElementById("btnYear").addEventListener("click", () => {
+      windowMode = "year";
+      document.getElementById("btnYear").classList.add("active");
+      document.getElementById("btnMonth").classList.remove("active");
+      loadMarket();
+    });
 
-  const _oldLoadInsights = loadInsights;
-  loadInsights = async function() {
-    await _oldLoadInsights();
-    await loadMarket();
-    await loadForecast();
-  }
+    (async function init() {
+      // Show celebration if searching for graduate roles
+      if (QUERY && QUERY.toLowerCase().includes("graduate")) {
+        const animation = document.getElementById("graduateAnimation");
+        animation.style.display = "flex";
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+          animation.style.opacity = "0";
+          animation.style.transition = "opacity 0.5s ease";
+          setTimeout(() => animation.style.display = "none", 500);
+        }, 5000);
+      }
+
+      await loadInsights();
+      loadMarket();
+      loadForecast();
+    })();
   </script>
+
 </body>
 </html>

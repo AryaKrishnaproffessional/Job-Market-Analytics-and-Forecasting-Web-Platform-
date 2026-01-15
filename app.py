@@ -4,10 +4,14 @@ import pandas as pd
 import plotly.express as px
 import os, time, hashlib
 import numpy as np
+from plotly.utils import PlotlyJSONEncoder
+import json
+
 
 app = Flask(__name__)
 
-# --- DB config (USE env vars; don't hardcode passwords) ---
+FEATURED_ROLES = ["Cybersecurity", "Data Scientist", "AI Engineer", "Software Engineer"]
+
 SQL_SERVER   = os.getenv("AZURE_SQL_SERVER",   "auseast.database.windows.net")
 SQL_DATABASE = os.getenv("AZURE_SQL_DATABASE", "JobMarketDb")
 SQL_USERNAME = os.getenv("AZURE_SQL_USERNAME", "CloudSAfc8188ca")
@@ -20,7 +24,6 @@ ENGINE = create_engine(
     "&TrustServerCertificate=no"
 )
 
-# --- Base cache (raw DB df) ---
 _cache = {"ts": 0, "df": None}
 CACHE_TTL_SECONDS = 60
 
@@ -33,7 +36,7 @@ def load_data_cached():
         """
         SELECT *
         FROM JobPosts
-        WHERE created >= DATEADD(day, -90, GETUTCDATE())
+        WHERE created >= DATEADD(day, -365, GETUTCDATE())
         ORDER BY created DESC
         """,
         ENGINE
@@ -43,20 +46,16 @@ def load_data_cached():
     return df
 
 
-# --- “Processed df” cache (parsed timestamps + job_key) ---
 _cache_keys = {"ts": 0, "df": None}
-CACHE_KEYS_TTL_SECONDS = 180  # 2–5 mins is fine
+CACHE_KEYS_TTL_SECONDS = 180  
 
 def _make_job_key(df: pd.DataFrame) -> pd.Series:
-    """
-    Faster than df.apply(axis=1): build one string series then hash.
-    """
+    """Faster than df.apply(axis=1): build one string series then hash."""
     s = (
         df["title"].fillna("").astype(str) + "|" +
         df["company"].fillna("").astype(str) + "|" +
         df["location"].fillna("").astype(str)
     )
-    # sha256 per row
     return s.map(lambda x: hashlib.sha256(x.encode("utf-8")).hexdigest())
 
 def load_data_with_keys_cached():
@@ -66,11 +65,8 @@ def load_data_with_keys_cached():
 
     df = load_data_cached().copy()
 
-    # Parse timestamps ONCE
     df["created"] = pd.to_datetime(df["created"], utc=True, errors="coerce")
     df["fetched_at"] = pd.to_datetime(df["fetched_at"], utc=True, errors="coerce")
-
-    # Compute job_key ONCE
     df["job_key"] = _make_job_key(df)
 
     _cache_keys["df"] = df
@@ -79,10 +75,7 @@ def load_data_with_keys_cached():
 
 
 def _bucketize(ts: pd.Series, bucket: str) -> pd.Series:
-    """
-    Avoid timezone warning from .to_period() by converting to tz-naive first.
-    bucket = "D" or "M"
-    """
+    """Avoid timezone warning from .to_period() by converting to tz-naive first."""
     ts_naive = ts.dt.tz_convert(None)
     return ts_naive.dt.to_period(bucket).dt.start_time
 
@@ -101,26 +94,43 @@ def insights():
 
 @app.route("/api/market_summary")
 def api_market_summary():
-    # Small timing helper
-    t0 = time.time()
-    def log(msg):
-        nonlocal t0
-        print(msg, round(time.time() - t0, 3))
-        t0 = time.time()
-
     q = (request.args.get("q") or "").strip().lower()
     loc = (request.args.get("loc") or "").strip().lower()
     window = (request.args.get("window") or "month").strip().lower()
 
     df = load_data_with_keys_cached().copy()
-    log("load_data_with_keys_cached:")
 
-    # Filters
     if q:
         df = df[df["role"].astype(str).str.lower().str.contains(q, na=False)]
     if loc:
         df = df[df["location"].astype(str).str.lower().str.contains(loc, na=False)]
-    log("filters:")
+
+    if df.empty:
+        fig = px.line(title=None)
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(family="Raleway")
+        )
+        
+        def json_plotly(payload):
+            return app.response_class(
+                response=json.dumps(payload, cls=PlotlyJSONEncoder),
+                status=200,
+                mimetype="application/json"
+            )
+        
+        return json_plotly({
+            "kpis": {
+                "created": 0,
+                "closed": 0,
+                "net": 0,
+                "active_now": 0
+            },
+            "chart": fig.to_plotly_json(),
+            "note": "No data available for this search. Try a different role or location."
+        })
 
     now = pd.Timestamp.now(tz="UTC")
     if window == "year":
@@ -130,13 +140,10 @@ def api_market_summary():
         start = now - pd.Timedelta(days=30)
         bucket = "D"
 
-    # Created counts
     created_df = df[df["created"] >= start].copy()
     created_df["bucket"] = _bucketize(created_df["created"], bucket)
     created_series = created_df.groupby("bucket")["job_key"].nunique().sort_index()
-    log("created_series:")
 
-    # Closed counts (simple approximation using latest snapshot)
     latest_snap = df["fetched_at"].max()
     latest_keys = set(df.loc[df["fetched_at"] == latest_snap, "job_key"].unique())
 
@@ -145,9 +152,7 @@ def api_market_summary():
     closed_df = df[(df["is_closed"]) & (df["created"] >= start)].copy()
     closed_df["bucket"] = _bucketize(closed_df["created"], bucket)
     closed_series = closed_df.groupby("bucket")["job_key"].nunique().sort_index()
-    log("closed_series:")
 
-    # Align dates
     idx = created_series.index.union(closed_series.index)
     created_series = created_series.reindex(idx, fill_value=0)
     closed_series = closed_series.reindex(idx, fill_value=0)
@@ -164,19 +169,40 @@ def api_market_summary():
     })
 
     fig = px.line(chart_df, x="date", y=["created", "closed"], title=None)
+    
+    fig.update_traces(yaxis="y2" if fig.data[0].name == "created" else "y", selector=dict(name="created"))
+    
     fig.update_layout(
         margin=dict(l=20, r=20, t=20, b=20),
         legend_title_text="",
+        legend=dict(x=0.02, y=0.98, bgcolor="rgba(255,255,255,0.8)", bordercolor="rgba(0,0,0,0.1)", borderwidth=1),
         xaxis_title="",
-        yaxis_title="Jobs",
+        yaxis_title="Jobs closed",
+        yaxis2=dict(
+            title_text="Jobs created",
+            overlaying="y",
+            side="right"
+        ),
         paper_bgcolor="white",
         plot_bgcolor="white",
         font=dict(family="Raleway"),
+        hovermode="x unified",
     )
-    log("plotly:")
 
-    return jsonify({
-        "kpis": {"created": k_created, "closed": k_closed, "net": k_net, "active_now": k_active},
+    def json_plotly(payload):
+        return app.response_class(
+            response=json.dumps(payload, cls=PlotlyJSONEncoder),
+            status=200,
+            mimetype="application/json"
+        )
+
+    return json_plotly({
+        "kpis": {
+            "created": k_created,
+            "closed": k_closed,
+            "net": k_net,
+            "active_now": k_active
+        },
         "chart": fig.to_plotly_json()
     })
 
@@ -185,105 +211,103 @@ def api_market_summary():
 def api_forecast():
     q = (request.args.get("q") or "").strip().lower()
     loc = (request.args.get("loc") or "").strip().lower()
-    years = int(request.args.get("years") or 5)
+
+    weeks = int(request.args.get("weeks") or 12)
+    weeks = max(4, min(52, weeks))
 
     df = load_data_with_keys_cached().copy()
+    df["created"] = pd.to_datetime(df["created"], utc=True, errors="coerce")
 
     if q:
         df = df[df["role"].astype(str).str.lower().str.contains(q, na=False)]
     if loc:
         df = df[df["location"].astype(str).str.lower().str.contains(loc, na=False)]
 
-    # Monthly job count
-    m = df.dropna(subset=["created"]).copy()
-    m["month"] = _bucketize(m["created"], "M")
-    series = m.groupby("month").size().sort_index()
+    w = df.dropna(subset=["created"]).copy()
+    w = w.drop_duplicates(subset=["job_key"])
 
-    if len(series) < 6:
+    w["week"] = w["created"].dt.tz_convert(None).dt.to_period("W").dt.start_time
+    series = w.groupby("week").size().sort_index()
+
+    if len(series) < 8:
         fig = px.line(title=None)
         fig.update_layout(
-            margin=dict(l=20,r=20,t=20,b=20),
-            paper_bgcolor="white", plot_bgcolor="white",
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor="white",
+            plot_bgcolor="white",
             font=dict(family="Raleway")
         )
-        return jsonify({"chart": fig.to_plotly_json(), "note": "Not enough data to forecast."})
+        return app.response_class(
+            response=json.dumps({"chart": fig.to_plotly_json(), "note": f"Not enough data to forecast. Need at least ~8 weeks, but only have {len(series)}."}, cls=PlotlyJSONEncoder),
+            status=200,
+            mimetype="application/json"
+        )
 
-    # Simple linear trend fit (fast)
     y = series.values.astype(float)
-    x = np.arange(len(y))
-    a, b = np.polyfit(x, y, 1)  # y ≈ a*x + b
+    x = np.arange(len(y), dtype=float)
+    a, b = np.polyfit(x, y, 1)
 
-    horizon_months = years * 12
-    x_future = np.arange(len(y) + horizon_months)
-    y_hat = a * x_future + b
-    y_hat = np.clip(y_hat, 0, None)
+    x_future = np.arange(len(y) + weeks, dtype=float)
+    y_hat = np.clip(a * x_future + b, 0, None)
 
     hist_x = series.index
-    hist_fit = y_hat[:len(y)]
+    hist_fit = y_hat[:len(y)].tolist() 
+    future_y = y_hat[len(y):].tolist()  
 
-    future_months = pd.date_range(hist_x[-1], periods=horizon_months + 1, freq="MS")[1:]
-    future_y = y_hat[len(y):]
+    future_weeks = pd.date_range(hist_x[-1], periods=weeks + 1, freq="W-MON")[1:]
 
     fig = px.line(title=None)
     fig.add_scatter(x=hist_x, y=series.values, mode="lines+markers", name="Historical")
     fig.add_scatter(x=hist_x, y=hist_fit, mode="lines", name="Trend fit")
-    fig.add_scatter(x=future_months, y=future_y, mode="lines", name="Forecast")
+    fig.add_scatter(x=future_weeks, y=future_y, mode="lines", name="Forecast")
 
     fig.update_layout(
-        margin=dict(l=20,r=20,t=20,b=20),
+        margin=dict(l=20, r=20, t=20, b=20),
         legend_title_text="",
         xaxis_title="",
-        yaxis_title="Jobs per month",
+        yaxis_title="Jobs per week",
         paper_bgcolor="white",
         plot_bgcolor="white",
         font=dict(family="Raleway")
     )
 
-    return jsonify({"chart": fig.to_plotly_json()})
+    return app.response_class(
+        response=json.dumps({"chart": fig.to_plotly_json(), "meta": {"weeks": weeks}}, cls=PlotlyJSONEncoder),
+        status=200,
+        mimetype="application/json"
+    )
 
 
 @app.route("/api/insights")
 def api_insights():
-    t0 = time.time()
-
     q = (request.args.get("q") or "").strip().lower()
     loc = (request.args.get("loc") or "").strip().lower()
 
     df = load_data_with_keys_cached().copy()
-    print("load_data_with_keys_cached:", round(time.time() - t0, 3)); t0 = time.time()
 
-    # Filters
     if q:
         df = df[df["role"].astype(str).str.lower().str.contains(q, na=False)]
     if loc:
         df = df[df["location"].astype(str).str.lower().str.contains(loc, na=False)]
-    print("filters:", round(time.time() - t0, 3)); t0 = time.time()
 
-    # Latest snapshot
     latest_snapshot_time = df["fetched_at"].max()
     latest_df = df[df["fetched_at"] == latest_snapshot_time].copy()
-
-    # Dedupe current listings
     latest_df = latest_df.drop_duplicates(subset=["job_key"])
 
-    # Nearby
     nearby_df = latest_df.sort_values("created", ascending=False).head(50)
 
-    # Top salary
     top_salary_df = (
         latest_df.dropna(subset=["salary_avg"])
                  .sort_values("salary_avg", ascending=False)
                  .head(50)
     )
 
-    # Opening soon
     opening_df = (
         latest_df[latest_df["created"] >= (pd.Timestamp.now(tz="UTC") - pd.Timedelta(days=7))]
         .sort_values("created", ascending=False)
         .head(50)
     )
 
-    # Closing soon approximation:
     latest_keys = set(latest_df["job_key"].unique())
     recently_seen = df[df["created"] >= (pd.Timestamp.now(tz="UTC") - pd.Timedelta(days=30))].copy()
     recently_seen = recently_seen.sort_values("fetched_at").drop_duplicates("job_key", keep="last")
@@ -294,21 +318,31 @@ def api_insights():
         .head(50)
     )
 
-    # Related (FIXED: mask is built on latest_df so no reindex warning)
     related_df = pd.DataFrame(columns=latest_df.columns)
     if q:
-        q_words = [w for w in q.split() if len(w) >= 3]
-        if q_words:
-            mask = latest_df["role"].astype(str).str.lower().apply(lambda r: any(w in r for w in q_words))
-            related_df = latest_df.loc[mask].drop_duplicates("job_key").head(50)
+        current_role = None
+        for role in FEATURED_ROLES:
+            if role.lower() in q:
+                current_role = role
+                break
+        
+        if current_role:
+            other_roles = [r for r in FEATURED_ROLES if r.lower() != current_role.lower()]
+            all_df = load_data_with_keys_cached().copy()
+            
+            for role in other_roles:
+                role_df = all_df[all_df["role"].astype(str).str.lower() == role.lower()]
+                related_df = pd.concat([related_df, role_df], ignore_index=True)
+            
+            # Remove duplicates and get latest
+            related_df = related_df.drop_duplicates(subset=["job_key"])
+            related_df = related_df.sort_values("created", ascending=False).head(50)
 
     def fmt_out(dfx: pd.DataFrame):
         cols = ["title", "company", "location", "salary_avg", "created"]
         out = dfx[cols].copy()
         out["created"] = pd.to_datetime(out["created"], utc=True, errors="coerce").dt.strftime("%Y-%m-%d %H:%M UTC")
         return out.to_dict("records")
-
-    print("total endpoint:", round(time.time() - t0, 3))
 
     return jsonify({
         "nearby": fmt_out(nearby_df),
@@ -318,6 +352,56 @@ def api_insights():
         "related": fmt_out(related_df),
     })
 
+
+@app.route("/api/related_roles")
+def api_related_roles():
+    """Get other featured roles when searching for a specific role"""
+    q = (request.args.get("q") or "").strip().lower()
+    
+    if not q:
+        return jsonify({
+            "related_roles": [],
+            "note": "No search query provided"
+        })
+    
+    current_role = None
+    for role in FEATURED_ROLES:
+        if role.lower() in q:
+            current_role = role
+            break
+    
+    if not current_role:
+        return jsonify({
+            "related_roles": [],
+            "note": "Current role not in featured list"
+        })
+    
+    #Getting other featured roles with stats
+    df = load_data_with_keys_cached().copy()
+    related_roles = []
+    
+    for role in FEATURED_ROLES:
+        if role.lower() == current_role.lower():
+            continue
+        
+        role_data = df[df["role"].astype(str).str.lower() == role.lower()]
+        
+        if not role_data.empty:
+            unique_jobs = len(role_data["job_key"].unique())
+            avg_salary = role_data["salary_avg"].mean() if role_data["salary_avg"].notna().any() else None
+            
+            related_roles.append({
+                "role": role,
+                "total_jobs": unique_jobs,
+                "avg_salary": round(avg_salary) if avg_salary else None,
+                "top_locations": role_data["location"].value_counts().head(3).to_dict() if not role_data.empty else {},
+                "search_url": f"/insights?q={role.replace(' ', '+')}"
+            })
+    
+    return jsonify({
+        "current_role": current_role,
+        "related_roles": related_roles
+    })
 
 @app.route("/search", methods=["GET"])
 def search():
@@ -353,7 +437,7 @@ def dashboard():
     fig2_html = fig2.to_html(full_html=False, include_plotlyjs=False)
 
     role_df = filtered.copy()
-    role_df["week"] = _bucketize(role_df["created"], "W")  # simple weekly bucket
+    role_df["week"] = _bucketize(role_df["created"], "W") 
 
     weekly_posted = role_df.groupby("week")["job_key"].nunique().reset_index(name="jobs_posted")
 
